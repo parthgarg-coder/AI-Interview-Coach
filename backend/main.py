@@ -2,11 +2,13 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from pypdf import PdfReader
 import os
 import json
+from pydantic import BaseModel
 
 from services.resume_parser import parse_resume
 from services.jd_parser import parse_job_description
 from services.matcher import match_resume_with_job
 from services.ai_question_generator import generate_interview_questions
+from services.answer_evaluator import evaluate_answer
 
 
 app = FastAPI(
@@ -375,4 +377,136 @@ async def generate_interview():
         "message": "Interview generated successfully",
         "match_result": match_result,
         "interview": questions
+    }
+# ==========================================
+# ANSWER EVALUATION REQUEST
+# ==========================================
+
+class AnswerRequest(BaseModel):
+
+    question: str
+    answer: str
+
+
+# ==========================================
+# EVALUATE INTERVIEW ANSWER
+# ==========================================
+
+@app.post("/evaluate-answer")
+async def evaluate_interview_answer(
+    request: AnswerRequest
+):
+
+    resume_path = os.path.join(
+        UPLOAD_DIR,
+        "resume_data.json"
+    )
+
+    jd_path = os.path.join(
+        UPLOAD_DIR,
+        "jd_data.json"
+    )
+
+    # ======================================
+    # Check resume
+    # ======================================
+
+    if not os.path.exists(resume_path):
+
+        raise HTTPException(
+            status_code=400,
+            detail="Please upload a resume first."
+        )
+
+    # ======================================
+    # Check JD
+    # ======================================
+
+    if not os.path.exists(jd_path):
+
+        raise HTTPException(
+            status_code=400,
+            detail="Please upload a job description first."
+        )
+
+    # ======================================
+    # Read resume
+    # ======================================
+
+    with open(
+        resume_path,
+        "r",
+        encoding="utf-8"
+    ) as file:
+
+        resume = json.load(file)
+
+    # ======================================
+    # Read JD
+    # ======================================
+
+    with open(
+        jd_path,
+        "r",
+        encoding="utf-8"
+    ) as file:
+
+        job_description = json.load(file)
+
+    # ======================================
+    # Match resume with JD
+    # ======================================
+
+    match_result = match_resume_with_job(
+        resume,
+        job_description
+    )
+
+    # ======================================
+    # Build context
+    # ======================================
+
+    context = {
+        "candidate": resume,
+        "job": job_description,
+        "matching": match_result
+    }
+
+    # ======================================
+    # Validate answer
+    # ======================================
+
+    if not request.answer.strip():
+
+        raise HTTPException(
+            status_code=400,
+            detail="Answer cannot be empty."
+        )
+
+    # ======================================
+    # Evaluate answer using Gemini
+    # ======================================
+
+    try:
+
+        evaluation = evaluate_answer(
+            request.question,
+            request.answer,
+            context
+        )
+
+    except RuntimeError as e:
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
+
+    # ======================================
+    # Return evaluation
+    # ======================================
+
+    return {
+        "message": "Answer evaluated successfully",
+        "evaluation": evaluation
     }
