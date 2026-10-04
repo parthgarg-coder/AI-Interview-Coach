@@ -1,0 +1,24 @@
+Job Title: Machine Learning Engineer
+
+Requirements:
+- Python
+- Machine Learning
+- PyTorch
+- Scikit-learn
+- SQL
+- FastAPI
+- REST APIs
+- Data Structures and Algorithms
+
+Responsibilities:
+- Build and deploy machine learning models
+- Develop REST APIs for ML applications
+- Process and analyze datasets
+- Optimize machine learning models
+- Work with software engineering teams
+
+Qualifications:
+- Bachelor's degree in Computer Science or related field
+- Strong Python programming skills
+- Understanding of machine learning algorithms
+- Knowledge of SQL and databases
