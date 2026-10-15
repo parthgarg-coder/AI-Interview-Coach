@@ -237,11 +237,31 @@ Important:
                 "Please try again."
             )
 
+        except requests.exceptions.ConnectionError as e:
+
+            if attempt < max_attempts:
+
+                wait_time = attempt * 3
+
+                print(
+                    f"Gemini connection error. "
+                    f"Retrying in {wait_time} seconds..."
+                )
+
+                time.sleep(wait_time)
+
+                continue
+
+            raise RuntimeError(
+                "Network error while contacting Gemini after "
+                f"{max_attempts} attempts: {e}"
+            ) from e
+
         except requests.exceptions.RequestException as e:
 
             raise RuntimeError(
                 f"Network error while contacting Gemini: {e}"
-            )
+            ) from e
 
         # -------------------------------------------------
         # Successful response

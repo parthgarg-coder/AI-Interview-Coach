@@ -303,11 +303,28 @@ Use exactly this structure:
                 f"{max_attempts} attempts."
             )
 
-        except requests.exceptions.RequestException as e:
+        except requests.exceptions.ConnectionError as e:
 
-            print("Network error:")
-            print(str(e))
+            if attempt < max_attempts:
+
+                wait_time = attempt * 3
+
+                print(
+                    f"Gemini connection error. "
+                    f"Retrying in {wait_time} seconds..."
+                )
+
+                time.sleep(wait_time)
+
+                continue
+
+            raise RuntimeError(
+                "Network error while contacting Gemini after "
+                f"{max_attempts} attempts: {e}"
+            ) from e
+
+        except requests.exceptions.RequestException as e:
 
             raise RuntimeError(
                 f"Network error while contacting Gemini: {e}"
-            )
+            ) from e
