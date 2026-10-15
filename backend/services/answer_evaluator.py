@@ -22,7 +22,7 @@ if not API_KEY:
     )
 
 
-MODEL = "gemini-3.8-flash"
+MODEL = "gemini-3.7-flash"
 
 API_URL = (
     f"https://generativelanguage.googleapis.com/"
